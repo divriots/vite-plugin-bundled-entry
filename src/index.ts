@@ -58,7 +58,6 @@ export default function bundledEntryPlugin(
   }
   return {
     name: `vite:plugin:bundled:entry:${opts.id}`,
-    // enforce: 'post',
     configResolved(c) {
       config = c;
       isBuild = config.command === "build";
@@ -84,8 +83,10 @@ export default function bundledEntryPlugin(
                   return;
                 }
                 bundle = Promise.resolve(result!);
-                // TODO invalidate just the bundle
-                server.moduleGraph.invalidateAll();
+                const mod = server.moduleGraph.getModuleById('\0'+opts.id)
+                if (mod) {
+                  server.moduleGraph.invalidateModule(mod);
+                }
                 server.ws.send({
                   type: "full-reload",
                   path: "*",
