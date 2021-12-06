@@ -105,7 +105,7 @@ export default function bundledEntryPlugin(
       if (id.startsWith(opts.outFile)) {
         if (isBuild) {
           return {
-            id: await emit(this),
+            id: (await emit(this)).slice(1),
             external: true,
           };
         } else {
