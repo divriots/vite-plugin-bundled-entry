@@ -25,12 +25,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/gluck/vite-plugin-bundled-entry.git"
+    "url": "git+https://github.com/divriots/vite-plugin-bundled-entry.git"
   },
   "bugs": {
-    "url": "https://github.com/gluck/vite-plugin-bundled-entry/issues"
+    "url": "https://github.com/divriots/vite-plugin-bundled-entry/issues"
   },
-  "homepage": "https://github.com/gluck/vite-plugin-bundled-entry",
+  "homepage": "https://github.com/divriots/vite-plugin-bundled-entry",
   "devDependencies": {
     "@types/node": "^16.11.11",
     "tsup": "^5.7.1",
