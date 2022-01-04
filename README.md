@@ -40,7 +40,7 @@ export default {
 In your code
 
 ```js
-import url 'some_virtual_id?url';
+import url from 'some_virtual_id?url';
 // will be /assets/mybundle.[hash].js (with hash placeholder replaced in build mode)
 
 function createWorker() {
