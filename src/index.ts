@@ -2,6 +2,8 @@ import { build, BuildOptions, BuildResult } from "esbuild";
 import type { Plugin, ResolvedConfig, ViteDevServer } from "vite";
 import type { PluginContext } from "rollup";
 import { createHash } from "crypto";
+import * as path from "path";
+import * as fs from "fs";
 
 export interface BundledEntryPluginOptions {
   id: string;
@@ -17,11 +19,40 @@ export default function bundledEntryPlugin(
   let config: ResolvedConfig;
   let isBuild: boolean;
   let server: ViteDevServer;
-  let bundle: Promise<BuildResult>;
+  let result: BuildResult;
   let esbuildOptions: BuildOptions;
+  const watchedFiles = new Set<string>();
   async function generate() {
-    if (!bundle) bundle = build(esbuildOptions);
-    const result = await bundle;
+    if (!result) {
+      result = await build(esbuildOptions)
+      if (!isBuild) {
+        const onChange = (changedFile: string) => {
+          if (watchedFiles.has(changedFile)) {
+            const mod = server.moduleGraph.getModuleById('\0'+opts.id)
+            if (mod) {
+              server.moduleGraph.invalidateModule(mod);
+            }
+            server.ws.send({
+              type: "full-reload",
+              path: "*",
+            });
+          }
+        }
+        server.watcher.on('add', onChange);
+        server.watcher.on('change', onChange);
+        server.watcher.on('unlink', onChange);
+      }
+    } else if (result.rebuild) {
+      result = await result.rebuild();
+    }
+    for (const file in result.metafile?.inputs) {
+      if (file.includes('\0')) continue;
+      const resolved = path.resolve(config.root, file);
+      if (fs.existsSync(resolved)) {
+        watchedFiles.add(resolved)
+        server.watcher.add(resolved);
+      }
+    }
     const { text: code } = result.outputFiles?.find((it) =>
       it.path.endsWith(esbuildOptions.outfile || "<stdout>")
     )!;
@@ -74,25 +105,8 @@ export default function bundledEntryPlugin(
         },
         bundle: true,
         write: false,
-        watch: isBuild
-          ? false
-          : {
-              onRebuild(error, result) {
-                if (error) {
-                  console.error(error);
-                  return;
-                }
-                bundle = Promise.resolve(result!);
-                const mod = server.moduleGraph.getModuleById('\0'+opts.id)
-                if (mod) {
-                  server.moduleGraph.invalidateModule(mod);
-                }
-                server.ws.send({
-                  type: "full-reload",
-                  path: "*",
-                });
-              },
-            },
+        incremental: !isBuild,
+        metafile: !isBuild
       };
     },
     configureServer(s) {
@@ -143,12 +157,7 @@ export default function bundledEntryPlugin(
       return null;
     },
     async closeBundle() {
-      if (!isBuild && bundle) {
-        // stops esbuild watcher
-        await (
-          await bundle
-        ).stop!();
-      }
+      result?.rebuild?.dispose();
     },
   };
 }

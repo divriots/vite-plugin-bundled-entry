@@ -1,6 +1,6 @@
 {
   "name": "vite-plugin-bundled-entry",
-  "version": "0.2.8",
+  "version": "0.3.1",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -9,7 +9,7 @@
     "require": "./dist/index.js"
   },
   "license": "MIT",
-  "author": "gluck",
+  "author": "divriots",
   "files": [
     "dist"
   ],
@@ -38,7 +38,7 @@
     "vite": "^2.0.2"
   },
   "dependencies": {
-    "esbuild": "^0.13.15"
+    "esbuild": "^0.14.10"
   },
   "peerDependencies": {
     "vite": "^2.0.2"
