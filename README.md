@@ -1,5 +1,16 @@
 # vite-plugin-bundled-entry [![npm](https://img.shields.io/npm/v/vite-plugin-bundled-entry.svg)](https://www.npmjs.com/package/vite-plugin-bundled-entry)
 
+<p>
+  <a href="https://divRIOTS.com">Brought to you by<br/></a>
+  <a href="https://divRIOTS.com#gh-light-mode-only" target="_blank">
+        <img width="150" height="40" src="https://divRIOTS.com/divriots.svg#gh-light-mode-only" alt="‹div›RIOTS" />
+        </a>
+        <a href="https://divRIOTS.com#gh-dark-mode-only" target="_blank">
+        <img width="150" height="40" src="https://divRIOTS.com/divriots-dark.svg#gh-dark-mode-only" alt="‹div›RIOTS" />
+        </a>
+</p>
+
+
 ### Purpose
 
 Vite goes to great length *not* to bundle anything (in dev), but there are cases where you've got no choice but to bundle.
