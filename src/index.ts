@@ -19,10 +19,11 @@ export default function bundledEntryPlugin(
   let config: ResolvedConfig;
   let isBuild: boolean;
   let server: ViteDevServer;
-  let result: BuildResult;
+  let result: BuildResult | undefined;
   let esbuildOptions: BuildOptions;
   const watchedFiles = new Set<string>();
-  async function generate() {
+  async function generate(context: PluginContext) {
+    const firstRun = !result;
     if (!result) {
       result = await build(esbuildOptions)
       if (!isBuild) {
@@ -50,7 +51,10 @@ export default function bundledEntryPlugin(
       const resolved = path.resolve(config.root, file);
       if (fs.existsSync(resolved)) {
         watchedFiles.add(resolved)
-        server.watcher.add(resolved);
+        server?.watcher?.add(resolved);
+        if (firstRun) {
+          context.addWatchFile(resolved);
+        }
       }
     }
     const { text: code } = result.outputFiles?.find((it) =>
@@ -64,10 +68,10 @@ export default function bundledEntryPlugin(
       map: sourcemap?.text,
     };
   }
-  let emitter: Promise<string>;
+  let emitter: Promise<string> | undefined;
   function emit(context: PluginContext) {
     if (!emitter) {
-      emitter = generate().then(({ code }) => {
+      emitter = generate(context).then(({ code }) => {
         const contentHash = getAssetHash(Buffer.from(code));
         const url = opts.outFile.replace(/\[hash\]/, contentHash);
         context.emitFile({
@@ -92,6 +96,7 @@ export default function bundledEntryPlugin(
     configResolved(c) {
       config = c;
       isBuild = config.command === "build";
+      const isBuildWatch = !!config.build.watch;
       esbuildOptions = {
         absWorkingDir: config.root,
         entryPoints: [opts.entryPoint],
@@ -106,7 +111,7 @@ export default function bundledEntryPlugin(
         bundle: true,
         write: false,
         incremental: !isBuild,
-        metafile: !isBuild
+        metafile: !isBuild || isBuildWatch
       };
     },
     configureServer(s) {
@@ -146,18 +151,20 @@ export default function bundledEntryPlugin(
         if (id.includes("?url"))
           return `export default '${await getUrl(this)}'`;
         // in build mode, will be renderer in renderChunk
-        return isBuild ? "" : await generate();
+        return isBuild ? "" : await generate(this);
       }
     },
     renderChunk(code, { facadeModuleId }) {
       // during build mode, generate chunk at render time to avoid re-processing the esbuild output through rollup
       if (facadeModuleId === "\0" + opts.id) {
-        return generate();
+        return generate(this);
       }
       return null;
     },
     async closeBundle() {
       result?.rebuild?.dispose();
+      result = undefined;
+      emitter = undefined;
     },
   };
 }
