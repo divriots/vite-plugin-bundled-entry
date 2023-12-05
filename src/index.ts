@@ -141,6 +141,7 @@ export default function bundledEntryPlugin(
         id.startsWith("\0" + opts.id) &&
         !isBuild &&
         !id.includes("?url") &&
+        !id.includes("?rawbundle") &&
         opts.transform
       ) {
         return opts.transform(code);
@@ -150,6 +151,8 @@ export default function bundledEntryPlugin(
       if (id.startsWith("\0" + opts.id)) {
         if (id.includes("?url"))
           return `export default '${await getUrl(this)}'`;
+        if (id.includes("?rawbundle"))
+          return `export default ${JSON.stringify((await generate(this)).code)}`;
         // in build mode, will be renderer in renderChunk
         return isBuild ? "" : await generate(this);
       }
