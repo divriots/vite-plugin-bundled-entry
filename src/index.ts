@@ -29,9 +29,9 @@ export default function bundledEntryPlugin(
       if (!isBuild) {
         const onChange = (changedFile: string) => {
           if (watchedFiles.has(changedFile)) {
-            const mod = server.moduleGraph.getModuleById('\0'+opts.id)
-            if (mod) {
-              server.moduleGraph.invalidateModule(mod);
+            const mods = server.moduleGraph.getModulesByFile('\0'+opts.id)
+            if (mods) {
+              mods.forEach(m => server.moduleGraph.invalidateModule(m))
             }
             server.ws.send({
               type: "full-reload",
